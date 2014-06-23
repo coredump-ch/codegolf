@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="jumbotron">
+        <div class="container">
+            <h1>{% block challenge_name %}{% endblock %}</h1>
+            <p>{% block challenge_summary %}{% endblock %}</h1>
+        </div>
+    </div>
+    <div class="container">
+        <div class="col-md-12">
+            {% block challenge_description %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}

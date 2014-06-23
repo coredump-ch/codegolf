@@ -1,0 +1,29 @@
+{% extends "challenge.html" %}
+
+{% block challenge_name %}Intel x86 Assembly Compass{% endblock %}
+
+{% block challenge_summary %}Write an Intel x86 assembly program that &ndash;
+when compiled with the provided Makefile &ndash; returns an ASCII compass.{% endblock %}
+
+{% block challenge_description %}
+    <h2>Expected output</h2>
+
+    <p>The template for the output is provided in <code>compass.txt</code>. The
+    program is passed a digit (ASCII) between 0 and 7. The numbers stand for
+    directions:</p>
+
+    <ul>
+        <li>0: North</li>
+        <li>1: Northeast</li>
+        <li>2: East</li>
+        <li>3: Southeast</li>
+        <li>4: South</li>
+        <li>5: Southwest</li>
+        <li>6: West</li>
+        <li>7: Northwest</li>
+    </ul>
+
+    <h2>Goal</h2>
+
+    <p>Minimize the size of the binary.</p>
+{% endblock %}
