@@ -5,11 +5,16 @@
 {% block challenge_summary %}Write an Intel x86 assembly program that &ndash;
 when compiled with the provided Makefile &ndash; returns an ASCII compass.{% endblock %}
 
-{% block challenge_description %}
+{% block description %}
+    <p>All required files for this challenge can be found at <a
+    href="https://github.com/dbrgn/asm-codegolf">github.com/dbrgn/asm-codegolf</a>.</p>
+
     <h2>Expected output</h2>
 
-    <p>The template for the output is provided in <code>compass.txt</code>. The
-    program is passed a digit (ASCII) between 0 and 7. The numbers stand for
+    <p>The template for the output is provided in <a
+    href="https://github.com/dbrgn/asm-codegolf/blob/master/compass.txt">
+    <code>compass.txt</code></a>. The program is passed a digit (ASCII)
+    between 0 and 7 via <code>argv</code>. The numbers stand for
     directions:</p>
 
     <ul>
@@ -23,7 +28,85 @@ when compiled with the provided Makefile &ndash; returns an ASCII compass.{% end
         <li>7: Northwest</li>
     </ul>
 
+    <p>The expected output for all those directions can be found in <a
+    href="https://github.com/dbrgn/asm-codegolf/blob/master/expected.txt">
+    <code>expected.txt</code></a>.</p>
+
+    <p>Example:</p>
+
+<pre>
+$ ./main 3
+   _N_
+  /   \
+W|  .  |E
+ |   \ |
+  \_ _/
+    S
+</pre>
+
+
     <h2>Goal</h2>
 
     <p>Minimize the size of the binary.</p>
+
+
+    <h2>Constraints</h2>
+
+    <ul>
+        <li>The code needs to be written in 32 bit Intel (x86) assembly (NASM syntax).</li>
+        <li>No library calls are allowed, use syscalls instead.</li>
+    </ul>
+
+
+    <h2>Verification</h2>
+
+    <p>Build the binary using <code>Make</code>:</p>
+
+<pre>
+$ make
+nasm -f elf32 -O0 main.s
+ld -m elf_i386 -s -O0 -o main main.o
+</pre>
+
+    <p>Then run the test script with Python 2:</p>
+
+<pre>
+$ python test.py
+Success!
+Binary size is 460 bytes.
+</pre>
+
+    <h2>Debugging</h2>
+
+    <p>If you want a binary with debug symbols included, use the
+    <code>debug</code> Make target:</p>
+
+<pre>
+$ make debug
+nasm -f elf32 -g -O0 main.s
+ld -m elf_i386 -O0 -o debug main.o
+$ gdb ./debug
+(gdb) ...
+</pre>
+{% endblock %}
+
+{% block sidebar %}
+    <h2>High Scores</h2>
+
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Bytes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Danilo &amp; Chrigi</th>
+                <td>452</td>
+            </tr>
+        </tbody>
+    </table>
 {% endblock %}

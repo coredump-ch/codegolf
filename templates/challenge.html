@@ -5,11 +5,16 @@
         <div class="container">
             <h1>{% block challenge_name %}{% endblock %}</h1>
             <p>{% block challenge_summary %}{% endblock %}</h1>
+
         </div>
     </div>
     <div class="container">
-        <div class="col-md-12">
-            {% block challenge_description %}{% endblock %}
+        <div class="col-md-9">
+            {% block description %}{% endblock %}
+        </div>
+        <div class="col-md-3">
+            <p><a class="btn btn-success btn-lg" role="button" href="{{ solution_url }}">Submit Solution &raquo;</a></p>
+            {% block sidebar %}{% endblock %}
         </div>
     </div>
 {% endblock %}

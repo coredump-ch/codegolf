@@ -14,7 +14,8 @@ def home():
 
 @app.route('/challenges/asm-compass/')
 def asm_compass():
-    return render_template('challenges/compass.html')
+    solution_url = '/challenges/asm-compass/submit/'
+    return render_template('challenges/compass.html', solution_url=solution_url)
 
 
 if __name__ == "__main__":
