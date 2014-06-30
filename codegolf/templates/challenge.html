@@ -13,7 +13,11 @@
             {% block main %}{% endblock %}
         </div>
         <div class="col-md-3">
-            <p><a class="btn btn-success btn-lg" role="button" href="{{ solution_url }}">Submit Solution &raquo;</a></p>
+            {% if info_url %}
+                <p><a class="btn btn-default btn-lg" role="button" href="{{ info_url }}">Back to Infopage &raquo;</a></p>
+            {% elif solution_url %}
+                <p><a class="btn btn-success btn-lg" role="button" href="{{ solution_url }}">Submit Solution &raquo;</a></p>
+            {% endif %}
             {% block sidebar %}{% endblock %}
         </div>
     </div>

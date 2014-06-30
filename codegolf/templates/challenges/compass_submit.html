@@ -1,9 +1,4 @@
-{% extends "challenge.html" %}
-
-{% block challenge_name %}Intel x86 Assembly Compass{% endblock %}
-
-{% block challenge_summary %}Write an Intel x86 assembly program that &ndash;
-when compiled with the provided Makefile &ndash; returns an ASCII compass.{% endblock %}
+{% extends "challenges/compass.html" %}
 
 {% macro render_field(field) %}
     <div class="form-group {% if field.errors %}has-error{% endif %}">
@@ -37,27 +32,23 @@ when compiled with the provided Makefile &ndash; returns an ASCII compass.{% end
             </div>
         </form>
     {% else %}
-        <p>Congrats {{ name }}, your {{ size }} bytes of source code run successfully.</p>
+        {% if success != False %}
+            <p>Congrats {{ name }}, your {{ size }} bytes of source code run successfully.</p>
+        {% endif %}
+
+        {% if success == True %}
+            <div class="alert alert-success" role="alert">
+            <strong>YAY,</strong>
+        {% elif success == False %}
+            <div class="alert alert-danger" role="alert">
+            <strong>Sorry,</strong>
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+            <strong>Sorry,</strong>
+        {% endif %}
+            {{ msg }}
+            {% if output %}<br><br><pre>{{ output }}</pre>{% endif %}
+        </div>
+        <p><a class="btn btn-success" role="button" href="{{ solution_url }}">Resubmit Solution &raquo;</a></p>
     {% endif %}
-{% endblock %}
-
-{% block sidebar %}
-    <h2>High Scores</h2>
-
-    <table class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Bytes</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td>Danilo &amp; Chrigi</th>
-                <td>452</td>
-            </tr>
-        </tbody>
-    </table>
 {% endblock %}
