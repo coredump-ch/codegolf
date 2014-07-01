@@ -3,4 +3,4 @@ from codegolf.server import app
 
 app.debug = True
 app.secret_key = 'TODO'
-app.run(debug=True)
+app.run(debug=True, host='0.0.0.0')
