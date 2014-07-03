@@ -65,7 +65,8 @@ def asm_compass_submit():
         if not os.path.exists('code'):
             os.makedirs('code')
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        filepath = os.path.abspath('code/%s-%s.s' % (form.name.data, timestamp))
+        safename = ''.join(c for c in form.name.data if c.isalpha())
+        filepath = os.path.abspath('code/%s-%s.s' % (safename, timestamp))
         form.source.data.save(filepath)
         try:
             size = asm_compass_verify(filepath)
