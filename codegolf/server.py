@@ -109,11 +109,13 @@ def asm_compass_verify(filepath):
     dirname, filename = os.path.split(filepath)
     client = docker.Client()
     cid = client.create_container(DOCKER_IMAGE,
-                                  'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(
-                                      filename),
-                                  user='compass',
-                                  working_dir='/home/compass/codegolf',
-                                  volumes=['/code'])
+                'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
+                user='compass',
+                working_dir='/home/compass/codegolf',
+                volumes=['/code'],
+                network_disabled=True,
+                mem_limit=20,
+    )
     client.start(cid, binds={dirname: '/code'})
 
     # Start timer to ensure code does not run forever, timeout 10 seconds
