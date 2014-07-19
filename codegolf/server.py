@@ -2,7 +2,9 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
+from threading import Timer
 from datetime import datetime
+
 try:
     from shlex import quote
 except ImportError:
@@ -89,10 +91,15 @@ def asm_compass_submit():
     else:
         data = {}
     data['highscores'] = HighscoreEntry.query.order_by(
-            HighscoreEntry.size.asc(), HighscoreEntry.updated_on.asc())
+        HighscoreEntry.size.asc(), HighscoreEntry.updated_on.asc())
     data['info_url'] = '/challenges/asm-compass/'
     data['solution_url'] = '/challenges/asm-compass/submit/'
     return render_template('challenges/compass_submit.html', form=form, **data)
+
+
+def stop_long_running(args):
+    args[0].kill()
+    raise RuntimeError('the code runs too long')
 
 
 def asm_compass_verify(filepath):
@@ -102,12 +109,21 @@ def asm_compass_verify(filepath):
     dirname, filename = os.path.split(filepath)
     client = docker.Client()
     cid = client.create_container(DOCKER_IMAGE,
-            'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
-            user='compass',
-            working_dir='/home/compass/codegolf',
-            volumes=['/code'])
+                'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
+                user='compass',
+                working_dir='/home/compass/codegolf',
+                volumes=['/code'],
+                network_disabled=True,
+                mem_limit=20,
+    )
     client.start(cid, binds={dirname: '/code'})
+
+    # Start timer to ensure code does not run forever, timeout 10 seconds
+    timer = Timer(10.0, stop_long_running, args=[client])
+    timer.start()
+
     code = client.wait(cid)
+    timer.cancel()
     output = client.logs(cid, stdout=True)
     if code != 0:
         ex = RuntimeError('building the sourcecode failed')
@@ -134,7 +150,7 @@ def asm_compass_add_highscore(name, size):
             return True, 'updated score from %d to %d.' % (entry.size, size)
         else:
             return None, 'binary size (%d) is not smaller than the currently stored value (%d).' % \
-                   (size, entry.size)
+                         (size, entry.size)
     else:
         app.logger.info('[asm-compass] No highscore entry found for %s.', name)
         new_entry = HighscoreEntry('asm-compass', name, size)
