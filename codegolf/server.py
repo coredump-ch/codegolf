@@ -19,6 +19,8 @@ from .forms import CompassSubmitForm
 
 
 DOCKER_IMAGE = 'dbrgn/asm-codegolf'
+MEMORY_LIMIT = 1024 * 1024 * 32  # 32 MB
+MAX_RUNTIME = 10  # 10 s
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../highscore.db'
@@ -104,9 +106,9 @@ def asm_compass_submit():
     return render_template('challenges/compass_submit.html', form=form, **data)
 
 
-def stop_long_running(args):
-    args[0].kill()
-    raise RuntimeError('the code runs too long')
+def stop_long_running(client, container):
+    client.kill(container)
+    raise RuntimeError('the code runs longer than %d seconds' % MAX_RUNTIME)
 
 
 def asm_compass_verify(filepath):
@@ -121,12 +123,12 @@ def asm_compass_verify(filepath):
                 working_dir='/home/compass/codegolf',
                 volumes=['/code'],
                 network_disabled=True,
-                mem_limit=1024 * 1024 * 32,  # 32 MB
+                mem_limit=MEMORY_LIMIT,
     )
     client.start(cid, binds={dirname: '/code'})
 
-    # Start timer to ensure code does not run forever, timeout 10 seconds
-    timer = Timer(10.0, stop_long_running, args=[client])
+    # Start timer to ensure code does not run forever
+    timer = Timer(MAX_RUNTIME, stop_long_running, args=[client, cid])
     timer.start()
 
     code = client.wait(cid)
