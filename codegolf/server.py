@@ -3,7 +3,8 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import os
 import logging
-from threading import Timer
+from threading import Thread
+from Queue import Queue, Empty 
 from datetime import datetime
 
 try:
@@ -106,40 +107,49 @@ def asm_compass_submit():
     return render_template('challenges/compass_submit.html', form=form, **data)
 
 
-def stop_long_running(client, container):
-    client.kill(container)
-    raise RuntimeError('the code runs longer than %d seconds' % MAX_RUNTIME)
 
 
 def asm_compass_verify(filepath):
     """
     Verify an entry for the asm compass challenge.
     """
+    events = Queue()
     dirname, filename = os.path.split(filepath)
     client = docker.Client()
     cid = client.create_container(DOCKER_IMAGE,
-                'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
-                user='compass',
-                working_dir='/home/compass/codegolf',
-                volumes=['/code'],
-                network_disabled=True,
-                mem_limit=MEMORY_LIMIT,
-    )
-    client.start(cid, binds={dirname: '/code'})
+	       			  'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
+			           user='compass',
+			           working_dir='/home/compass/codegolf',
+			           volumes=['/code'],
+			           network_disabled=True,
+			           mem_limit=MEMORY_LIMIT)
 
-    # Start timer to ensure code does not run forever
-    timer = Timer(MAX_RUNTIME, stop_long_running, args=[client, cid])
-    timer.start()
+    def compile():
+        client.start(cid, binds={dirname: '/code'})
+        code =	client.wait(cid)
+	events.put(code)
+	
 
-    code = client.wait(cid)
-    timer.cancel()
-    output = client.logs(cid, stdout=True)
-    if code != 0:
-        ex = RuntimeError('building the sourcecode failed')
-        ex.output = output
-        raise ex
-    client.remove_container(cid)
-    return int(output)
+    compile_thread = Thread(target=compile)
+    compile_thread.start()
+    try:
+        return_code = events.get(timeout=MAX_RUNTIME)
+	
+    #Code runs too long
+    except Empty:
+        client.kill(cid)
+	ex = RuntimeError('the code runs longer than %d seconds' % MAX_RUNTIME)
+	ex.output = 'probable loop in code detected'
+	raise ex
+
+    else:
+        output = client.logs(cid, stdout=True)
+	if return_code != 0:
+ 	    ex = RuntimeError('building the sourcecode failed')
+            ex.output = output
+            raise ex
+	client.remove_container(cid)
+        return int(output)
 
 
 def asm_compass_add_highscore(name, size):
