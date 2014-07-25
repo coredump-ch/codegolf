@@ -2,6 +2,7 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 import os
+import logging
 from threading import Timer
 from datetime import datetime
 
@@ -21,7 +22,13 @@ DOCKER_IMAGE = 'dbrgn/asm-codegolf'
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../highscore.db'
+app.secret_key = os.environ.get('SECRET_KEY')
 db = SQLAlchemy(app)
+
+if not app.debug:
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(stream_handler)
 
 
 class HighscoreEntry(db.Model):
