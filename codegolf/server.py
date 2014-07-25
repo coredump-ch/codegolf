@@ -121,7 +121,7 @@ def asm_compass_verify(filepath):
                 working_dir='/home/compass/codegolf',
                 volumes=['/code'],
                 network_disabled=True,
-                mem_limit=1024 * 1024,  # 1 MB
+                mem_limit=1024 * 1024 * 32,  # 32 MB
     )
     client.start(cid, binds={dirname: '/code'})
 
