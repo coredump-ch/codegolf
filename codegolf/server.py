@@ -3,7 +3,7 @@ from __future__ import print_function, division, absolute_import, unicode_litera
 
 import os
 import logging
-from threading import Timer
+import threading
 from datetime import datetime
 
 try:
@@ -19,6 +19,7 @@ from .forms import CompassSubmitForm
 
 
 DOCKER_IMAGE = 'dbrgn/asm-codegolf'
+DOCKER_TIMEOUT = 10.0
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../highscore.db'
@@ -104,9 +105,9 @@ def asm_compass_submit():
     return render_template('challenges/compass_submit.html', form=form, **data)
 
 
-def stop_long_running(args):
-    args[0].kill()
-    raise RuntimeError('the code runs too long')
+def stop_long_running(client, cid, timed_out):
+    timed_out.set()
+    client.kill(cid)
 
 
 def asm_compass_verify(filepath):
@@ -126,11 +127,18 @@ def asm_compass_verify(filepath):
     client.start(cid, binds={dirname: '/code'})
 
     # Start timer to ensure code does not run forever, timeout 10 seconds
-    timer = Timer(10.0, stop_long_running, args=[client])
+    timed_out = threading.Event()
+    timer = threading.Timer(DOCKER_TIMEOUT, stop_long_running, args=[client, cid, timed_out])
     timer.start()
 
     code = client.wait(cid)
     timer.cancel()
+
+    if timed_out.is_set():
+        ex = RuntimeError('the code runs for too long')
+        ex.output = 'Timeout: Code took longer than %ds to execute!' % DOCKER_TIMEOUT
+        raise ex
+
     output = client.logs(cid, stdout=True)
     if code != 0:
         ex = RuntimeError('building the sourcecode failed')
