@@ -160,9 +160,10 @@ def asm_compass_add_highscore(name, size):
     if entry:
         app.logger.info('[asm-compass] Highscore entry found for %s.', name)
         if entry.size > size:
+            old_size = entry.size
             entry.size = size
             db.session.commit()
-            return True, 'updated score from %d to %d.' % (entry.size, size)
+            return True, 'updated score from %d to %d.' % (old_size, size)
         else:
             return None, 'binary size (%d) is not smaller than the currently stored value (%d).' % \
                          (size, entry.size)
