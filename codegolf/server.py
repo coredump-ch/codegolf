@@ -76,7 +76,9 @@ def asm_compass_submit():
             os.makedirs('code')
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
         safename = ''.join(c for c in form.name.data if c.isalpha())
-        filepath = os.path.abspath('code/%s-%s.s' % (safename, timestamp))
+        tmpdir = 'code/%s-%s' % (timestamp, safename)
+        os.makedirs(tmpdir)
+        filepath = os.path.abspath('%s/submission.s' % tmpdir)
         form.source.data.save(filepath)
         try:
             size = asm_compass_verify(filepath)
@@ -116,15 +118,25 @@ def asm_compass_verify(filepath):
     """
     dirname, filename = os.path.split(filepath)
     client = docker.Client()
+
     cid = client.create_container(DOCKER_IMAGE,
-                'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
-                user='compass',
-                working_dir='/home/compass/codegolf',
-                volumes=['/code'],
-                network_disabled=True,
-                mem_limit=1024 * 1024 * 32,  # 32 MB
+        'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
+        volumes=['/code'],
+        host_config=docker.utils.create_host_config(
+            binds={
+                dirname: {
+                    'bind': '/code',
+                    'mode': 'ro',
+                },
+            },
+            network_mode='none',
+            mem_limit=1024 * 1024 * 32,  # 32 MB
+            memswap_limit=-1,  # No swap
+        ),
+        user='compass',
+        working_dir='/home/compass/codegolf',
     )
-    client.start(cid, binds={dirname: '/code'})
+    client.start(cid)
 
     # Start timer to ensure code does not run forever, timeout 10 seconds
     timed_out = threading.Event()
