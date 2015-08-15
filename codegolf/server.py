@@ -77,7 +77,7 @@ def asm_compass_submit():
         if not os.path.exists('code'):
             os.makedirs('code')
 
-        # Create a temporary dirctory for each submission
+        # Create a temporary directory for each submission
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
         tmpdir = 'code/%s-%s' % (timestamp, slugify(form.name.data))
         os.makedirs(tmpdir)
