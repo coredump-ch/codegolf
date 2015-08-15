@@ -12,6 +12,7 @@ except ImportError:
     from pipes import quote
 
 import docker
+from slugify import slugify
 from flask import Flask, render_template
 from flask.ext.sqlalchemy import SQLAlchemy
 
@@ -72,14 +73,19 @@ def asm_compass():
 def asm_compass_submit():
     form = CompassSubmitForm()
     if form.validate_on_submit():
+        # Create code directory
         if not os.path.exists('code'):
             os.makedirs('code')
+
+        # Create a temporary directory for each submission
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        safename = ''.join(c for c in form.name.data if c.isalpha())
-        tmpdir = 'code/%s-%s' % (timestamp, safename)
+        tmpdir = 'code/%s-%s' % (timestamp, slugify(form.name.data))
         os.makedirs(tmpdir)
+
+        # Save submission into that directory
         filepath = os.path.abspath('%s/submission.s' % tmpdir)
         form.source.data.save(filepath)
+
         try:
             size = asm_compass_verify(filepath)
             success, msg = asm_compass_add_highscore(form.name.data, size)
