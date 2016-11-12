@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
-
 from flask_wtf import Form
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, absolute_import, unicode_literals
-
 import os
 import logging
 import threading
@@ -94,7 +91,7 @@ def asm_compass_submit():
         except RuntimeError as e:
             size = 0
             success = False
-            msg = unicode(e)
+            msg = str(e)
             output = e.output
         data = {
             'name': form.name.data,
