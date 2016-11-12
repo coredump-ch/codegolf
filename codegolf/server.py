@@ -14,7 +14,7 @@ except ImportError:
 import docker
 from slugify import slugify
 from flask import Flask, render_template
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 
 from .forms import CompassSubmitForm
 
@@ -24,6 +24,7 @@ DOCKER_TIMEOUT = 10.0
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../highscore.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('SECRET_KEY')
 db = SQLAlchemy(app)
 
