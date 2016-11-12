@@ -4,7 +4,7 @@ Code Golf
 Prerequisites
 -------------
 
-- Python 2
+- Python 3
 - Docker
 
 Setup
@@ -24,7 +24,7 @@ Setup Code Golf Server
 ::
 
     pip install -r requirements.txt
-    docker pull dbrgn/asm-codegolf
+    docker pull quay.io/coredump/codegolf-asm-compass
     python -c 'from codegolf.server import db; db.create_all()'
 
 Start
