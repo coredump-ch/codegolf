@@ -1,12 +1,9 @@
 import os
 import logging
 import threading
+import tarfile
 from datetime import datetime
-
-try:
-    from shlex import quote
-except ImportError:
-    from pipes import quote
+from io import BytesIO
 
 import docker
 from slugify import slugify
@@ -116,6 +113,24 @@ def stop_long_running(client, cid, timed_out):
     client.kill(cid)
 
 
+def create_code_tar(filepath):
+    """
+    Create a tar file containing the ASM code as `main.s`.
+
+    This is necessary because the Docker API deprecated copying of single files
+    into a container.
+
+    See https://github.com/docker/docker-py/issues/1027
+
+    """
+    tarstream = BytesIO()
+    tar = tarfile.TarFile(fileobj=tarstream, mode='w')
+    tar.add(filepath, arcname='main.s')
+    tar.close()
+    tarstream.seek(0)
+    return tarstream
+
+
 def asm_compass_verify(filepath):
     """
     Verify an entry for the asm compass challenge.
@@ -123,23 +138,27 @@ def asm_compass_verify(filepath):
     dirname, filename = os.path.split(filepath)
     client = docker.Client()
 
-    cid = client.create_container(DOCKER_IMAGE,
-        'bash -c "cp /code/%s main.s && make -s && python test.py --short"' % quote(filename),
-        volumes=['/code'],
-        host_config=docker.utils.create_host_config(
-            binds={
-                dirname: {
-                    'bind': '/code',
-                    'mode': 'ro',
-                },
-            },
+    # Pull latest image
+    client.pull(DOCKER_IMAGE)
+
+    # Create container
+    cid = client.create_container(
+        DOCKER_IMAGE,
+        'sh -c "make -s && python3 test.py --short"',
+        host_config=client.create_host_config(
             network_mode='none',
             mem_limit=1024 * 1024 * 32,  # 32 MB
             memswap_limit=-1,  # No swap
         ),
-        user='compass',
-        working_dir='/home/compass/codegolf',
+        user='codegolf',
+        working_dir='/home/codegolf',
     )
+
+    # Copy asm file into container
+    tarstream = create_code_tar(filepath)
+    client.put_archive(container=cid, path='/home/codegolf', data=tarstream)
+
+    # Start container
     client.start(cid)
 
     # Start timer to ensure code does not run forever, timeout 10 seconds
@@ -147,20 +166,27 @@ def asm_compass_verify(filepath):
     timer = threading.Timer(DOCKER_TIMEOUT, stop_long_running, args=[client, cid, timed_out])
     timer.start()
 
+    # Wait for container to stop
     code = client.wait(cid)
     timer.cancel()
 
+    # If timeout happened, show error message
     if timed_out.is_set():
         ex = RuntimeError('the code runs for too long')
         ex.output = 'Timeout: Code took longer than %ds to execute!' % DOCKER_TIMEOUT
         raise ex
 
+    # Otherwise, get output of test script
     output = client.logs(cid, stdout=True)
     if code != 0:
         ex = RuntimeError('building the sourcecode failed')
-        ex.output = output
+        ex.output = output.decode('utf8').strip()
         raise ex
+
+    # Delete container
     client.remove_container(cid)
+
+    # Return number of bytes
     return int(output)
 
 
