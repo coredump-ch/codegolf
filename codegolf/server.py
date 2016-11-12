@@ -16,7 +16,7 @@ from flask_sqlalchemy import SQLAlchemy
 from .forms import CompassSubmitForm
 
 
-DOCKER_IMAGE = 'dbrgn/asm-codegolf'
+DOCKER_IMAGE = 'quay.io/coredump/codegolf-asm-compass'
 DOCKER_TIMEOUT = 10.0
 
 app = Flask(__name__)
